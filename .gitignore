@@ -23,5 +23,6 @@ logs
 .env.*
 !.env.example
 
-# Models
+# Assets
+public/assets/fonts
 public/assets/models
