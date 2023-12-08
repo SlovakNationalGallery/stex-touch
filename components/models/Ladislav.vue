@@ -6,6 +6,7 @@
       src="assets/models/ladislav/ladislav.gltf"
       shadow-intensity="1"
       camera-controls
+      @mousedown-model="onMousedown"
       touch-action="pan-y"
       v-slot="{ openMarker, openedMarker }"
     >
@@ -60,6 +61,12 @@ const markersRefs = ref([]);
 
 const setComponentRef = (index) => (ref) => {
   markersRefs.value[index] = ref;
+};
+
+const onMousedown = (e, openMarker) => {
+  const panning = e.button === 2 || e.ctrlKey || e.metaKey || e.shiftKey;
+  if (!panning) return;
+  openMarker(null);
 };
 
 const markersData = [
