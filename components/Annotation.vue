@@ -4,13 +4,13 @@
       <div
         class="pointer-events-auto flex items-center justify-between gap-4 pb-5 pt-2"
       >
-        <button @click="$emit('onPrev')">
+        <button @click="$emit('onPrevClick')">
           <img src="~/assets/img/arrow-left.svg" />
         </button>
-        <div class="font-display text-2xl font-bold">
+        <h3 class="font-display text-2xl font-bold">
           <slot name="header"></slot>
-        </div>
-        <button @click="$emit('onNext')">
+        </h3>
+        <button @click="$emit('onNextClick')">
           <img src="~/assets/img/arrow-left.svg" class="rotate-180" />
         </button>
       </div>

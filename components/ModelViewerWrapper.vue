@@ -1,45 +1,68 @@
 <template>
-  <model-viewer
-    ref="modelViewerRef"
-    @mousedown="$emit('mousedown-model', $event, openMarker)"
-    interaction-prompt-style="basic"
-  >
-    <div
-      slot="interaction-prompt"
-      class="flex w-96 flex-col gap-10 rounded-3xl bg-black bg-opacity-50 p-10"
-    >
-      <div class="flex flex-col items-center gap-6">
-        <svg
-          class="mx-auto h-36 w-36 fill-white"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 256 256"
+  <model-viewer ref="modelViewerRef" @mousedown="onMousedown">
+    <template v-for="(marker, i) in markersData">
+      <button
+        :ref="setComponentRef(i)"
+        @click="(e) => openMarker(e.target as HTMLElement)"
+        :slot="`hotspot-${i + 1}`"
+        :data-position="marker.dataPosition"
+        :data-normal="marker.dataNormal"
+        data-visibility-attribute="visible"
+        :id="`hotspot-${i + 1}`"
+      >
+        <PulsatingMarker
+          class="pointer-events-none visible flex h-16 w-16 items-center justify-center"
+          :open="openedMarker === `hotspot-${i + 1}`"
         >
-          <path
-            d="M48,76a60,60,0,0,1,120,0,8,8,0,0,1-16,0,44,44,0,0,0-88,0,8,8,0,0,1-16,0Zm140,44a27.9,27.9,0,0,0-13.36,3.39A28,28,0,0,0,136,106.7V76a28,28,0,0,0-56,0v80l-3.82-6.13a28,28,0,0,0-48.41,28.17l29.32,50A8,8,0,1,0,70.89,220L41.6,170a12,12,0,1,1,20.78-12l.14.23,18.68,30A8,8,0,0,0,96,184V76a12,12,0,0,1,24,0v68a8,8,0,0,0,16,0V132a12,12,0,0,1,24,0v20a8,8,0,0,0,16,0v-4a12,12,0,0,1,24,0v36c0,21.61-7.1,36.3-7.16,36.42a8,8,0,0,0,3.58,10.73A7.9,7.9,0,0,0,200,232a8,8,0,0,0,7.16-4.42c.37-.73,8.85-18,8.85-43.58V148A28,28,0,0,0,188,120Z"
-          ></path>
-        </svg>
-        <span class="text-center text-3xl font-bold text-white">Ovládanie</span>
-        <ul class="list-disc text-2xl text-white">
-          <li>Otáčaj jedným prstom</li>
-          <li>Posúvaj dvomi prstami</li>
-          <li>Zväčši roztiahnutím</li>
-        </ul>
-      </div>
-      <button class="w-full rounded-xl bg-white py-3 text-center font-bold">
-        Pokračuj
+          {{ i + 1 }}
+        </PulsatingMarker>
       </button>
-    </div>
+      <TransitionOpacity>
+        <Annotation
+          @onPrevClick="
+            openMarker(
+              i > 0 ? markersRefs[i - 1] : markersRefs[markersRefs.length - 1],
+            )
+          "
+          @onNextClick="
+            openMarker(
+              i < markersRefs.length - 1 ? markersRefs[i + 1] : markersRefs[0],
+            )
+          "
+          class="absolute bottom-0 right-0 z-10"
+          v-if="openedMarker === `hotspot-${i + 1}`"
+        >
+          <template #header>{{ `${i + 1}. ${marker.title}` }}</template>
+          <template #body
+            ><span>{{ marker.body }}</span></template
+          >
+        </Annotation>
+      </TransitionOpacity>
+    </template>
     <slot :openMarker="openMarker" :openedMarker="openedMarker"></slot>
   </model-viewer>
 </template>
 <script setup lang="ts">
 import "@google/model-viewer";
 import { ModelViewerElement } from "@google/model-viewer";
+
+defineProps(["markersData"]);
+
 const modelViewerRef = ref<ModelViewerElement>();
+const openedMarker = ref<string | null>(null);
+const markersRefs = ref<Array<HTMLElement>>([]);
+const setComponentRef = (index: number) => (ref: HTMLElement) => {
+  markersRefs.value[index] = ref;
+  return undefined;
+};
 
-const openedMarker = ref(null);
+const onMousedown = (e: any) => {
+  const panning = e.button === 2 || e.ctrlKey || e.metaKey || e.shiftKey;
+  if (!panning) return;
+  openMarker(null);
+};
 
-const openMarker = (marker) => {
+const openMarker = (marker: HTMLElement | null) => {
   if (!marker) {
     openedMarker.value = null;
     return;
@@ -51,6 +74,9 @@ const openMarker = (marker) => {
   }
   openedMarker.value = marker.id;
   const dataset = marker.dataset;
+  if (!dataset.position) {
+    return;
+  }
   modelViewerRef.value.cameraTarget = dataset.position;
 };
 </script>
